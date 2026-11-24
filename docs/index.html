@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VYT 1 - open-world driving game for Windows</title>
+<meta name="description" content="VYT 1 is a free open-world driving game for Windows: drive across an 8 km map, own an apartment, race, deliver, fly, sail. Download the portable .exe - no install.">
+<meta property="og:title" content="VYT 1 - open-world driving game">
+<meta property="og:description" content="Free Windows download. Drive, race, deliver, park, fly and sail across a huge procedural world.">
+<meta property="og:image" content="img/night-city.jpg">
+<link rel="icon" href="img/icon.png">
+<style>
+  :root{--bg:#070d18;--panel:#0e1829;--line:#1f3050;--gold:#ffd34d;--gold2:#f0a63a;--text:#e8eef8;--mute:#9db0cc}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "Segoe UI",system-ui,Arial,sans-serif}
+  a{color:var(--gold)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  nav{position:sticky;top:0;z-index:5;background:#070d18dd;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:58px}
+  nav b{font-size:20px;letter-spacing:4px}
+  nav a{color:var(--mute);text-decoration:none;font-size:14px}
+  nav a:hover{color:#fff}
+  nav .sp{flex:1}
+  .btn{display:inline-block;background:linear-gradient(#ffd34d,#f0a63a);color:#1a1200;font-weight:700;padding:14px 30px;border-radius:12px;text-decoration:none;box-shadow:0 8px 28px #f0a63a40;transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.small{padding:8px 18px;font-size:14px;border-radius:9px}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);box-shadow:none}
+  header.hero{position:relative;min-height:78vh;display:flex;align-items:center;background:linear-gradient(180deg,#070d18cc 0%,#070d18 100%),url(img/night-city.jpg) center/cover}
+  .hero h1{font-size:clamp(56px,11vw,128px);letter-spacing:.14em;margin:0;line-height:1;text-shadow:0 8px 40px #000}
+  .hero h1 span{color:var(--gold)}
+  .hero p.lead{font-size:clamp(18px,2.4vw,24px);max-width:660px;color:#cdd9ec;margin:18px 0 30px}
+  .hero .meta{margin-top:16px;color:var(--mute);font-size:14px}
+  section{padding:70px 0}
+  h2{font-size:clamp(28px,4vw,42px);margin:0 0 10px}
+  .sub{color:var(--mute);max-width:720px;margin:0 0 34px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px}
+  .card h3{margin:0 0 6px;font-size:18px}
+  .card p{margin:0;color:var(--mute);font-size:15px}
+  .card .ic{font-size:28px;margin-bottom:8px}
+  .shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .shots a{display:block;border-radius:14px;overflow:hidden;border:1px solid var(--line);position:relative}
+  .shots img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:16/9;transition:transform .35s}
+  .shots a:hover img{transform:scale(1.04)}
+  .shots figcaption{position:absolute;left:0;right:0;bottom:0;padding:26px 14px 10px;background:linear-gradient(transparent,#000c);font-size:14px}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  td,th{padding:10px 16px;text-align:left;border-bottom:1px solid var(--line);font-size:15px}
+  th{color:var(--gold);width:34%}
+  kbd{background:#1b2a44;border:1px solid #2f4570;border-bottom-width:3px;border-radius:6px;padding:1px 7px;font:13px monospace;color:#fff}
+  .dl{background:linear-gradient(135deg,#12203a,#0b1322);border:1px solid var(--line);border-radius:22px;padding:40px;display:flex;flex-wrap:wrap;gap:30px;align-items:center}
+  .dl img{width:120px;height:120px;border-radius:26px}
+  .dl .txt{flex:1;min-width:260px}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}
+  summary{cursor:pointer;font-weight:600}
+  details p{color:var(--mute);margin:10px 0 0}
+  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--mute);font-size:14px}
+  #lb{position:fixed;inset:0;background:#000e;display:none;align-items:center;justify-content:center;z-index:20;cursor:zoom-out}
+  #lb img{max-width:94vw;max-height:92vh;border-radius:10px}
+  @media(max-width:720px){nav .links{display:none}.dl{padding:24px}}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <b>VYT <span style="color:var(--gold)">1</span></b>
+  <span class="links" style="display:flex;gap:22px"><a href="#features">Features</a><a href="#screens">Screenshots</a><a href="#controls">Controls</a><a href="#faq">FAQ</a></span>
+  <span class="sp"></span>
+  <a class="btn small" href="download/VYT-1-portable.exe" download>Download for Windows</a>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <h1>VYT <span>1</span></h1>
+  <p class="lead">A free open-world driving game. Cruise an 8 km world of downtown towers, mountain passes, desert roads and a river - then buy a place to live, race, deliver, park, sail and fly.</p>
+  <a class="btn" href="download/VYT-1-portable.exe" download>⬇ Download VYT 1 (Windows, 77 MB)</a>
+  <a class="btn ghost" href="#screens" style="margin-left:10px">See screenshots</a>
+  <div class="meta">Portable .exe - no installer, no account · Windows 10/11 64-bit</div>
+</div></header>
+
+<section id="features"><div class="wrap">
+  <h2>Everything is in the box</h2>
+  <p class="sub">Every road, building, car, person and sound is generated by code, so the whole game is one small download.</p>
+  <div class="grid">
+    <div class="card"><div class="ic">🚗</div><h3>Real driving</h3><p>Tyre grip and drifting, suspension that reacts to bumps, manual or automatic gearbox, fuel, engine start-up, crash damage that dents the body.</p></div>
+    <div class="card"><div class="ic">🌆</div><h3>A big living world</h3><p>Downtown towers, residential streets, towns, desert, mountains, tunnel, bridge, airport. Traffic obeys signals and pedestrians look before they cross.</p></div>
+    <div class="card"><div class="ic">🌧</div><h3>Weather and time</h3><p>Day and night, rain, fog and storms. Wet roads reflect the sky; the cockpit view has wipers and a rear-view mirror.</p></div>
+    <div class="card"><div class="ic">🏠</div><h3>A place of your own</h3><p>Everyone starts with a free apartment. Walk into lobbies, ride the elevators, buy houses and villas with garages, pools and workshops.</p></div>
+    <div class="card"><div class="ic">🏁</div><h3>Things to do</h3><p>Deliveries, street races, a drift challenge, taxi shifts, cafés, a clothes shop - and levels that raise your pay. Police will notice trouble.</p></div>
+    <div class="card"><div class="ic">✈</div><h3>Cars, bikes, boats, planes</h3><p>Hatchback to supercar, a pickup, a van, a motorcycle, a speedboat for the river, and a plane you can fly from the airport.</p></div>
+    <div class="card"><div class="ic">🅿</div><h3>Park anywhere</h3><p>Parking lots across the map, villa driveways, and an underground car park under every tower. Park perfectly for a bonus.</p></div>
+    <div class="card"><div class="ic">📱</div><h3>Phone and laptop</h3><p>Call a tow truck, mechanic or fuel delivery from anywhere; set GPS routes; manage money and cars from your laptop at home.</p></div>
+  </div>
+</div></section>
+
+<section id="screens" style="background:#0a1322"><div class="wrap">
+  <h2>Screenshots</h2>
+  <p class="sub">Captured straight from the game.</p>
+  <div class="shots">
+    <a href="img/night-city.jpg"><figure style="margin:0"><img src="img/night-city.jpg" alt="Night in the city"><figcaption>Night downtown - lit windows, bloom, headlight beams</figcaption></figure></a>
+    <a href="img/cockpit-rain.jpg"><figure style="margin:0"><img src="img/cockpit-rain.jpg" alt="Cockpit in the rain"><figcaption>Cockpit view in the rain - wipers, mirror, wet roads</figcaption></figure></a>
+    <a href="img/downtown-day.jpg"><figure style="margin:0"><img src="img/downtown-day.jpg" alt="Downtown by day"><figcaption>Downtown by day - towers, traffic lights, ramps to underground parking</figcaption></figure></a>
+    <a href="img/lobby.jpg"><figure style="margin:0"><img src="img/lobby.jpg" alt="Tower lobby"><figcaption>Walk into any tower: reception desk and elevators</figcaption></figure></a>
+    <a href="img/garage.jpg"><figure style="margin:0"><img src="img/garage.jpg" alt="Garage"><figcaption>Your villa garage with the car and a workbench</figcaption></figure></a>
+    <a href="img/house.jpg"><figure style="margin:0"><img src="img/house.jpg" alt="House interior"><figcaption>Inside a house - bedroom, kitchen, view of the countryside</figcaption></figure></a>
+    <a href="img/on-foot.jpg"><figure style="margin:0"><img src="img/on-foot.jpg" alt="Walking in the city"><figcaption>Get out and walk the streets</figcaption></figure></a>
+    <a href="img/boat.jpg"><figure style="margin:0"><img src="img/boat.jpg" alt="Speedboat"><figcaption>Take the speedboat down the river</figcaption></figure></a>
+    <a href="img/plane.jpg"><figure style="margin:0"><img src="img/plane.jpg" alt="Flying"><figcaption>Fly from the airport and see the whole map</figcaption></figure></a>
+  </div>
+</div></section>
+
+<section id="controls"><div class="wrap">
+  <h2>Controls</h2>
+  <p class="sub">Keyboard. The in-game start screen has the full list.</p>
+  <table>
+    <tr><th>Drive</th><td><kbd>W</kbd> throttle · <kbd>S</kbd> brake / reverse · <kbd>A</kbd><kbd>D</kbd> steer · <kbd>Space</kbd> handbrake · <kbd>I</kbd> ignition</td></tr>
+    <tr><th>Gearbox</th><td><kbd>T</kbd> auto / manual · <kbd>Q</kbd><kbd>E</kbd> shift down / up</td></tr>
+    <tr><th>Car</th><td><kbd>L</kbd> lights · <kbd>Z</kbd><kbd>X</kbd><kbd>V</kbd> indicators / hazards · <kbd>H</kbd> horn · <kbd>N</kbd> radio · <kbd>U</kbd> wipers · <kbd>C</kbd> camera</td></tr>
+    <tr><th>Everything else</th><td><kbd>G</kbd> get out / in · <kbd>F</kbd> interact (doors, shops, fuel) · <kbd>P</kbd> phone · <kbd>M</kbd> map · <kbd>R</kbd> rob · <kbd>J</kbd> delivery job · <kbd>Esc</kbd> pause / settings</td></tr>
+    <tr><th>Plane</th><td><kbd>Shift</kbd><kbd>Ctrl</kbd> throttle · <kbd>W</kbd><kbd>S</kbd> pitch · <kbd>A</kbd><kbd>D</kbd> roll · <kbd>Q</kbd><kbd>E</kbd> rudder</td></tr>
+  </table>
+</div></section>
+
+<section id="download" style="background:#0a1322"><div class="wrap">
+  <div class="dl">
+    <img src="img/icon.png" alt="VYT 1 icon">
+    <div class="txt">
+      <h2 style="margin-bottom:6px">Download VYT 1</h2>
+      <p style="color:var(--mute);margin:0 0 18px">Windows 10/11 (64-bit), a mid-range GPU is plenty. Single portable file - double-click to play. Your progress is saved on your PC.</p>
+      <a class="btn" href="download/VYT-1-portable.exe" download>⬇ VYT-1-portable.exe &nbsp;(77 MB)</a>
+      <a class="btn ghost" href="https://github.com/Izyrn/VYT-I" style="margin-left:10px">Source on GitHub</a>
+    </div>
+  </div>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <h2>FAQ</h2><div style="margin-top:22px">
+    <details><summary>Windows says "Windows protected your PC"</summary><p>The game isn't code-signed yet, so SmartScreen shows a warning for new apps. Click <b>More info</b>, then <b>Run anyway</b>. You can read all of the source code on GitHub.</p></details>
+    <details><summary>Does it need an install or an internet connection?</summary><p>No. It is one portable .exe and runs fully offline. Saves are stored in a local database in your user profile folder.</p></details>
+    <details><summary>It runs slowly. What can I do?</summary><p>Press <kbd>Esc</kbd> then <b>Settings</b> (or <kbd>F2</kbd> in game) and set Graphics to Low or Medium. Medium and Low also show fewer pedestrians and cars.</p></details>
+    <details><summary>Is it a copy of another game?</summary><p>No. The map, cars, people, buildings, sounds and music are all original and generated by code.</p></details>
+    <details><summary>Can I get it for Mac or Linux?</summary><p>Not yet - the game is built with Electron, so you can run it from source with <code>npm install</code> and <code>npm start</code> on any platform. Instructions are in the README on GitHub.</p></details>
+  </div>
+</div></section>
+
+<footer><div class="wrap">VYT 1 · made by VYT Studio · <a href="https://github.com/Izyrn/VYT-I">GitHub</a> · built with Electron and Three.js</div></footer>
+
+<div id="lb"><img alt=""></div>
+<script>
+  const lb = document.getElementById('lb'), im = lb.querySelector('img');
+  document.querySelectorAll('.shots a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); im.src = a.href; lb.style.display = 'flex'; }));
+  lb.addEventListener('click', () => (lb.style.display = 'none'));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') lb.style.display = 'none'; });
+</script>
+</body>
+</html>
