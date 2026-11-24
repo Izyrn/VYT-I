@@ -91,6 +91,7 @@ export class Menus {
     const W = this.world, me = this.where(), pts = [];
     let st = null, bd = 1e9; for (const x of W.stations) { const d = Math.hypot(x.x - me.x, x.z - me.z); if (d < bd) { bd = d; st = x; } }
     if (st) pts.push({ n: 'Nearest fuel station', x: st.x, z: st.z, d: bd });
+    const lot = W.parking.nearest(me.x, me.z); pts.push({ n: 'Nearest parking: ' + lot.name, x: lot.x, z: lot.z, d: Math.hypot(lot.x - me.x, lot.z - me.z) });
     pts.push({ n: 'VYT Auto (dealership)', x: W.dealership.x, z: W.dealership.z, d: Math.hypot(W.dealership.x - me.x, W.dealership.z - me.z) });
     const home = this.homeSpot ? this.homeSpot() : null;
     if (home) pts.push({ n: 'Home - ' + home.name, x: home.x, z: home.z, d: Math.hypot(home.x - me.x, home.z - me.z) });

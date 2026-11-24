@@ -40,6 +40,7 @@ export class Assist {
   }
 
   request(kind, dest) {
+    if (this.world.garageActive) return this.hooks.toast('Roadside assistance cannot reach you underground - drive out first');
     if (this.job) return this.hooks.toast('A service vehicle is already on its way');
     if (this.cool > 0) return this.hooks.toast(`Dispatch is busy - try again in ${Math.ceil(this.cool)} s`);
     const cost = this.quote(kind);

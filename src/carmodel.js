@@ -349,3 +349,6 @@ export function createBoatMesh(def, { paintColor } = {}) {
   const wheelMesh = new THREE.Object3D(), cockpitGroup = new THREE.Group(); body.add(cockpitGroup);
   return { root, body, hull, hullGeo, wheels: [], mats, beams, beamMats: [], cabin: hull, roof: hull, wheelMesh, cockpitGroup, driver, driverHead: hm.parts.head, driverHair: { rotation: { y: 0 } }, human: hm, eye: new THREE.Vector3(-0.45, 1.25, -0.5) };
 }
+
+/** Shared shell geometry of a car model (used for instanced parked cars). */
+export function shellGeos(def) { const s = shellFor(def); return { hull: s.hullGeo, gh: s.gh, roof: s.roof }; }

@@ -16,6 +16,7 @@ import { createHuman } from './human.js';
 import { Progress, SHIRTS, PANTS, SHOES, HAIRS } from './progress.js';
 import { Events } from './events.js';
 import { Flight } from './flight.js';
+import { Garage } from './garage.js';
 import { clamp, lerp, wrapPi } from './util.js';
 
 const $ = (id) => document.getElementById(id);
@@ -169,7 +170,7 @@ function updateFoot(dt) {
   foot.v += (target - foot.v) * Math.min(1, dt * 9);
   const nx = foot.x + Math.sin(foot.yaw) * foot.v * dt, nz = foot.z + Math.cos(foot.yaw) * foot.v * dt;
   if (interiors.active) { foot.x = nx; foot.z = nz; interiors.collide(foot); }
-  else if (world.terrainH(nx, nz) > -2.2 && Math.abs(nx) < 3950 && Math.abs(nz) < 3950) { foot.x = nx; foot.z = nz; }
+  else if (garage.active || (world.terrainH(nx, nz) > -2.2 && Math.abs(nx) < 3950 && Math.abs(nz) < 3950)) { foot.x = nx; foot.z = nz; }
   for (const c of world.queryColliders(foot.x, foot.z, 0.6, foot.y)) {   // slide around walls and cars of the world
     const qx = clamp(foot.x, c.minX, c.maxX), qz = clamp(foot.z, c.minZ, c.maxZ);
     let dx = foot.x - qx, dz = foot.z - qz, d = Math.hypot(dx, dz);
@@ -208,6 +209,7 @@ function homeSpot() {
 const assist = new Assist(scene, world, car, save, {
   toast, persist: () => persist(),
   towTo(dest) {
+    if (garage.active) garage.close();
     const h = dest === 'home' ? homeSpot() : null;
     if (h && h.kind === 'apt') snapCarToRoad(h.x, h.z);
     else if (h) car.place(h.x, h.z, Math.atan2(Math.sign(h.x - h.bx), Math.sign(h.z - h.bz)));
@@ -225,6 +227,7 @@ function applyOutfit() {
   h.group.visible = vis; h.group.position.copy(pos); h.group.rotation.y = ry; scene.add(h.group); person.g = h.group; person.h = h;
 }
 function passOut() {
+  if (garage.active) garage.close();
   if (interiors.active) interiors.exit();
   const fee = Math.min(save.money, 150); save.money -= fee; progress.m.hunger = Math.max(progress.m.hunger, 40); progress.m.energy = Math.max(progress.m.energy, 40);
   const hm = homeSpot();
@@ -246,6 +249,16 @@ const interiors = new Interiors(scene, world, env, {
   onEnter() { me = foot; $('mini').style.display = 'none'; $('gauges').style.display = 'none'; $('mapbtn').style.display = 'none'; },
   onExit() { $('mini').style.display = ''; $('gauges').style.display = ''; $('mapbtn').style.display = ''; },
 });
+
+const garage = new Garage(scene, world, env, {
+  car, toast, keep: () => [car.holder, person.g],
+  fade(fn) { const f = $('fade'); f.style.opacity = 1; setTimeout(() => { fn(); setTimeout(() => (f.style.opacity = 0), 60); }, 430); },
+});
+function nearRamp(maxD) {
+  if (car.def.boat) return null;
+  for (const b of world.buildings) { const r = b.ramp, dx = car.s.x - r.x, dz = car.s.z - r.z; if (dx * dx + dz * dz < maxD * maxD) return { b, r }; }
+  return null;
+}
 
 /* ---------------- input ---------------- */
 const keys = new Set();
@@ -292,12 +305,14 @@ function placeOnRiver() {
   car.place(x, z, 0); car.s.y = -2.5; car.s.vx = car.s.vz = 0;
 }
 function swapVehicle(id) {
+  if (garage.active && carById(id).boat) garage.close();
   persist(); const wasBoat = car.def.boat, def = carById(id); save.current = id; car.setModel(def, save.cars[id]); car.s.vx = car.s.vz = 0;
   if (def.boat) { placeOnRiver(); toast('Your boat is waiting on the river'); }
   else if (wasBoat) { car.place(world.dealership.x, world.dealership.z + 4, Math.PI); car.s.y = world.heightAt(car.s.x, car.s.z, 5) + 0.7; toast('Your ' + def.name + ' is waiting at VYT Auto'); }
   if (onFoot) { foot.x = car.s.x + 2.6; foot.z = car.s.z; foot.y = world.heightAt(foot.x, foot.z, car.s.y); }
 }
 function resetCar() {
+  if (garage.active) garage.close();
   if (car.def.boat) return placeOnRiver();
   let best = null, bd = 1e9;
   for (const r of world.roads) {
@@ -506,8 +521,8 @@ function updateCamera(dt) {
   const sh = settings.shake ? shake * 0.25 + (sp > 30 ? (sp - 30) * 0.0006 : 0) : 0;
   if (camMode === 0) {
     camYaw += wrapPi(s.yaw - camYaw) * (1 - Math.exp(-5 * dt));
-    const dist = 6.8 + car.def.len * 0.3;
-    camPos.set(s.x - Math.sin(camYaw) * dist, s.y + 2.3, s.z - Math.cos(camYaw) * dist);
+    const dist = garage.active ? 3.6 + car.def.len * 0.25 : 6.8 + car.def.len * 0.3;
+    camPos.set(s.x - Math.sin(camYaw) * dist, s.y + (garage.active ? 1.35 : 2.3), s.z - Math.cos(camYaw) * dist);
     camPos.y = Math.max(camPos.y, world.heightAt(camPos.x, camPos.z, s.y + 3) + 0.8);
     camera.position.copy(camPos);
     camLook.set(s.x + Math.sin(s.yaw) * 4, s.y + 1.0, s.z + Math.cos(s.yaw) * 4);
@@ -576,6 +591,7 @@ function drawMap() {
     mg.strokeStyle = '#000a'; mg.lineWidth = 9; mg.beginPath(); route.pts.forEach((p, i) => { const [x, y] = S(p.x, p.z); i ? mg.lineTo(x, y) : mg.moveTo(x, y); }); mg.stroke();
     mg.strokeStyle = route.color; mg.lineWidth = 5; mg.stroke();
   }
+  if (layer('lf')) for (const l of world.parking.lots) { const [x, y] = S(l.x, l.z); mg.fillStyle = '#1b5fb8'; mg.fillRect(x - r, y - r, 2 * r, 2 * r); mg.strokeStyle = '#fff'; mg.lineWidth = 1.5; mg.strokeRect(x - r, y - r, 2 * r, 2 * r); mg.fillStyle = '#fff'; mg.font = 'bold ' + Math.round(r * 1.6) + 'px Arial'; mg.textAlign = 'center'; mg.fillText('P', x, y + r * 0.6); mg.textAlign = 'start'; if (labels) text(l.name, x + r + 3, y); }
   if (layer('lf')) for (const st of world.stations) { const [x, y] = S(st.x, st.z); mg.fillStyle = '#ff7a00'; mg.beginPath(); mg.arc(x, y, r, 0, 7); mg.fill(); mg.strokeStyle = '#000'; mg.lineWidth = 1.5; mg.stroke(); if (labels) text('Fuel', x + r + 3, y); }
   if (layer('lj')) for (const p of world.pois) { const [x, y] = S(p.x, p.z); mg.fillStyle = p.color; mg.fillRect(x - r, y - r, 2 * r, 2 * r); mg.strokeStyle = '#000'; mg.lineWidth = 1.5; mg.strokeRect(x - r, y - r, 2 * r, 2 * r); if (labels) text(p.name, x + r + 3, y); }
   if (layer('lh')) for (const P of world.properties) {
@@ -662,15 +678,20 @@ function frame(now) {
     flight.update(dt, keys);
     car.update(dt, world);
     if (!onFoot && !interiors.active) skids.update(car);
-    if (!interiors.active) { traffic.update(dt, env); jobs.update(dt); police.update(dt); assist.update(dt); } else interiors.update(dt, foot);
+    if (!interiors.active && !garage.active) { traffic.update(dt, env); jobs.update(dt); police.update(dt); assist.update(dt); } else if (interiors.active) interiors.update(dt, foot);
     if (progress.tick(dt)) passOut();
-    if (!onFoot && !interiors.active) events.update(dt);
+    if (!onFoot && !interiors.active && !flight.active) {
+      const pk = garage.active ? garage.update(dt, car) : world.parking.update(dt, car);
+      if (!garage.active && car.speed > 1.5) { const rp = nearRamp(3); if (rp) { const fx = Math.sin(car.s.yaw), fz = Math.cos(car.s.yaw); if (fx * -rp.r.nx + fz * -rp.r.nz > 0.5) garage.enter(rp.b); } }
+      if (pk) { if (pk.perfect) { save.money += 25; progress.award(12, 'perfect park'); toast('PERFECT PARK! +$25 - ' + pk.lot); } else { progress.award(4, 'parked'); toast('Parked in ' + pk.lot + ' (centre and straighten up for a perfect park)'); } }
+    }
+    if (!onFoot && !interiors.active && !garage.active) events.update(dt);
     updateRoute(dt);
     for (const e of car.events.splice(0)) { audio?.event(e); if (e === 'nofuel') toast('Out of fuel! Press Y to call roadside assistance'); if (e === 'started') toast('Engine started'); if (e === 'stall') toast('Engine stalled'); }
   }
   fx.update(dt);
   wind.update(dt, env.cur.rain, started && camMode === 1 && !onFoot && !interiors.active, settings.wipers);
-  const tun = (interiors.active || world.inTunnel(me.x, me.z)) ? 1 : 0; tunnelF = lerp(tunnelF, tun, 1 - Math.exp(-4 * dt));
+  const tun = (interiors.active || garage.active || world.inTunnel(me.x, me.z)) ? 1 : 0; tunnelF = lerp(tunnelF, tun, 1 - Math.exp(-4 * dt));
   env.update(dt, new THREE.Vector3(me.x, me.y, me.z), camera.position);
   env.hemi.intensity *= 1 - 0.9 * tunnelF; scene.environmentIntensity *= 1 - 0.9 * tunnelF;
   if (interiors.active) { env.moon.intensity = 0; env.flash = 0; }
@@ -679,7 +700,10 @@ function frame(now) {
   interact(dt);
   if (started && !paused && !shopOpen && !mapOpen && !$('prompt').textContent) {
     if (onFoot && Math.hypot(foot.x - car.s.x, foot.z - car.s.z) < 5) $('prompt').textContent = 'Press G to get in your car';
-    else if (!onFoot && car.speed < 1) $('prompt').textContent = 'Press G to get out of the car';
+    else if (onFoot && garage.active) $('prompt').textContent = 'Your car is down here - get in (G) and drive out through the green EXIT';
+    else if (!onFoot && !garage.active && car.speed < 12 && nearRamp(14)) $('prompt').textContent = 'Drive into the ramp to park underground';
+    else if (!onFoot && car.speed < 1) $('prompt').textContent = world.parking.lotAt(car.s.x, car.s.z) ? 'Parked? Press G to get out' : 'Press G to get out of the car';
+    else if (!onFoot && world.parking.lotAt(car.s.x, car.s.z)) $('prompt').textContent = 'Parking lot - pull into a free bay and stop';
   }
   updateCamera(dt);
   if (flight.active) { const p = planeAudio, s = flight.s; p.engine.rpm = 900 + s.thr * 2400; p.ctrl.throttle = s.thr; p.t.grounded = flight.onGround ? 1 : 0; p.speed = s.v; audio?.update(p, env, false); }
@@ -874,4 +898,35 @@ if (auto === '20') setTimeout(() => {   // plane self-test: board and take off
   keys.add('ShiftLeft'); setTimeout(() => keys.add('KeyS'), 9000);
   const iv = setInterval(() => console.log('TEST20 plane kph', Math.round(flight.speedKph), 'alt', Math.round(flight.alt), 'ground', flight.onGround, 'x', Math.round(flight.s.x), 'thr', flight.s.thr.toFixed(2)), 2500);
   setTimeout(() => { clearInterval(iv); flight.s.thr = 1; }, 40000);
+}, 2000);
+
+if (auto === '21') setTimeout(() => {   // parking lot self-test
+  $('start').click(); car.engine.state = 'off';
+  const lots = world.parking.lots, free = world.parking.bays.filter((b) => !b.occupied);
+  console.log('TEST21 lots', lots.length, 'bays', world.parking.bays.length, 'free', free.length, 'parked cars', world.parking.bays.length - free.length);
+  const b = free.find((x) => x.lot === 0 && x.row === 1) || free[0];
+  car.place(b.x, b.z - 12, b.yaw); car.s.y = 1; camMode = 0;
+  setTimeout(() => { car.place(b.x, b.z, b.yaw); car.s.y = 0.7; car.s.vx = car.s.vz = 0; }, 3000);
+  setTimeout(() => console.log('TEST21 near lot', world.parking.lotAt(car.s.x, car.s.z)?.name, 'money', Math.round(save.money), 'xp', Math.round(progress.m.xp)), 8000);
+}, 2000);
+
+if (auto === '22' || auto === '23') setTimeout(() => {   // underground garage (22) / villa driveway + ramp from outside (23)
+  $('start').click(); car.engine.state = 'off';
+  if (auto === '22') {
+    const b = world.buildings[40]; car.place(b.ramp.x + b.ramp.nx * 8, b.ramp.z + b.ramp.nz * 8, Math.atan2(-b.ramp.nx, -b.ramp.nz)); car.s.y = 1;
+    car.toggleIgnition();
+    console.log('TEST22 ramp', JSON.stringify(b.ramp), 'building', b.name);
+    setTimeout(() => keys.add('KeyW'), 2500);
+    setInterval(() => { console.log('TEST22 dbg', car.engine.state, 'gear', car.gear, 'thr', car.ctrl.throttle, 'drive', Math.round(car.driveReq || 0), 'grounded', car.t.grounded.toFixed(2), 'mu', car.surface.mu, 'y', car.s.y.toFixed(2)); console.log('TEST22 garage', garage.active, 'x', Math.round(car.s.x), 'z', Math.round(car.s.z), 'kph', Math.round(car.speed * 3.6), 'colliders', garage.colliders.length, 'bays', garage.bays.length); }, 3000);
+    setTimeout(() => { keys.delete('KeyW'); keys.add('KeyA'); }, 9000); setTimeout(() => { keys.delete('KeyA'); keys.add('KeyW'); }, 10000); setTimeout(() => keys.delete('KeyW'), 12500);
+  } else {
+    const P = world.properties[2]; const lot = world.parking.lots.find((l) => l.name.includes(P.name)); console.log('TEST23 villa lot', lot ? lot.name + ' bays' : 'none', world.parking.bays.filter((b) => lot && b.lot === lot.id).length);
+    car.place(lot.x - 18, lot.z + 14, Math.PI * 0.75); car.s.y = 1;
+    setTimeout(() => { camMode = 0; }, 100);
+  }
+}, 2000);
+
+if (auto === '24') setTimeout(() => {   // look at a parking lot
+  $('start').click(); car.engine.state = 'off'; const l = world.parking.lots[0];
+  car.place(l.x - 16, l.z, Math.PI / 2); car.s.y = 1; camMode = 0; env.time = 13;
 }, 2000);

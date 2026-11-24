@@ -38,7 +38,8 @@
       "target": [
         "portable"
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false
     },
     "portable": {
       "artifactName": "VYT-1-portable.exe"

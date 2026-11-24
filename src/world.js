@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Water } from 'three/addons/objects/Water.js';
 import { clamp, lerp, smoothstep, mulberry32, fbm } from './util.js';
 import { Extras } from './extras.js';
+import { Parking, LOT_SITES } from './parking.js';
 import { createHuman } from './human.js';
 
 export const HALF = 4000, SEG = 320, CELL = (HALF * 2) / SEG;
@@ -25,6 +26,7 @@ export class World {
     this.buildLandmarks();
     this.buildNature();
     this.extras = new Extras(this);   // street lamps, traffic lights, building entrances
+    this.parking = new Parking(this, this.propLots);  // parking lots + villa driveways, with parked cars
     this.buildHash();
     this.buildMinimap();
     this.dealership = { x: -180, z: 130 };
@@ -64,6 +66,7 @@ export class World {
     // Houses for sale: [buildingX, buildingZ, ringX, ringZ]
     this.propSites = [[-1800, -55, -1800, -26], [62, 900, 26, 900], [3062, 450, 3022, 450], [-70, -1650, -26, -1650], [-2420, 520, -2470, 520]];
     for (const [bx, bz, rx, rz] of this.propSites) this.zone(Math.min(bx, rx) - 28, Math.max(bx, rx) + 28, Math.min(bz, rz) - 28, Math.max(bz, rz) + 28, 50);
+    for (const s of LOT_SITES) this.zone(s.axis === 'x' ? s.x - s.w / 2 - 6 : s.x - 16, s.axis === 'x' ? s.x + s.w / 2 + 6 : s.x + 16, s.axis === 'x' ? s.z - 16 : s.z - s.w / 2 - 6, s.axis === 'x' ? s.z + 16 : s.z + s.w / 2 + 6, 30);
     for (const [bx, bz, rx, rz] of this.poiSites) this.zone(Math.min(bx, rx) - 12, Math.max(bx, rx) + 12, Math.min(bz, rz) - 12, Math.max(bz, rz) + 12, 40);
   }
 
@@ -169,6 +172,7 @@ export class World {
   }
   /** Highest drivable surface at or below hint+1. */
   heightAt(x, z, hint = 0) {
+    if (this.garageActive && x > 6000) return 0;
     let y = this.terrainH(x, z);
     // bridge deck over the river
     if (x > -1620 && x < -1480 && Math.abs(z) < 9 && 0 <= hint + 1 && 0 > y) y = 0;
@@ -178,6 +182,7 @@ export class World {
     return y;
   }
   surfaceAt(x, z, out = {}) {
+    if (this.garageActive && x > 6000) { out.road = true; out.mu = 1; return out; }
     const rd = this.roadDist(x, z);
     out.road = rd < 0.5 || this.zoneDist(x, z) < 0.01;
     out.mu = out.road ? 1 : lerp(0.58, 0.62, this.desertAmt(x, z));
@@ -441,7 +446,7 @@ export class World {
       g.fillStyle = color; g.fillRect(0, 0, 512, 128); g.fillStyle = '#111'; g.font = 'bold 44px Arial'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 66);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false })); sp.scale.set(7, 1.75, 1); return sp;
     };
-    this.properties = [];
+    this.properties = []; this.propLots = [];
     T.forEach((P, i) => {
       const [bx, bz, rx, rz] = this.propSites[i];
       Object.assign(P, { id: i, bx, bz, x: rx, z: rz });
@@ -473,6 +478,7 @@ export class World {
       const sale = label(`FOR SALE · ${P.name}`, '#ffe14d'), homeL = label(`HOME · ${P.name}`, '#7be07b');
       sale.position.set(0, H + 3.6 * P.sc, D / 2 + 1); homeL.position.copy(sale.position); homeL.visible = false; g.add(sale, homeL);
       const [cw, cd] = alongZ ? [W, D] : [D, W];
+      this.propLots.push(alongZ ? { name: P.name + ' driveway', x: bx + W / 2 + 12, z: bz + dirz * (D / 2 + 3.5), axis: 'x', w: 20, rows: 1, rv: 1, roadDist: 0 } : { name: P.name + ' driveway', x: bx + dirx * (D / 2 + 3.5), z: bz + W / 2 + 12, axis: 'z', w: 20, rows: 1, rv: 1, roadDist: 0 });
       this.addCollider(bx - cw / 2, bx + cw / 2, bz - cd / 2, bz + cd / 2, 0, H + 3);
       const ring = new THREE.Mesh(new THREE.RingGeometry(3, 3.8, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
       ring.position.set(rx, 0.12, rz); this.scene.add(ring);
@@ -648,6 +654,7 @@ export class World {
     });
   }
   queryColliders(x, z, r, y) {
+    if (this.garageActive && x > 6000 && this.garage) return this.garage.query(x, z, r, y);
     const C = 40, out = []; this.qid++;
     for (let ix = Math.floor((x - r) / C); ix <= Math.floor((x + r) / C); ix++) for (let iz = Math.floor((z - r) / C); iz <= Math.floor((z + r) / C); iz++) {
       const a = this.hash.get(ix * 100003 + iz); if (!a) continue;
@@ -674,6 +681,7 @@ export class World {
       if (r.axis === 'x') { g.moveTo((r.a0 + 4000) * k, (r.c + 4000) * k); g.lineTo((r.a1 + 4000) * k, (r.c + 4000) * k); } else { g.moveTo((r.c + 4000) * k, (r.a0 + 4000) * k); g.lineTo((r.c + 4000) * k, (r.a1 + 4000) * k); } g.stroke(); }
     for (const s of this.stations) { g.fillStyle = '#ff7a00'; g.beginPath(); g.arc((s.x + 4000) * k, (s.z + 4000) * k, 7, 0, 7); g.fill(); }
     for (const q of this.pois) { g.fillStyle = q.color; g.fillRect((q.x + 4000) * k - 6, (q.z + 4000) * k - 6, 12, 12); }
+    for (const l of this.parking.lots) { g.fillStyle = '#1b5fb8'; g.fillRect((l.x + 4000) * k - 7, (l.z + 4000) * k - 7, 14, 14); g.fillStyle = '#fff'; g.font = 'bold 13px Arial'; g.textAlign = 'center'; g.fillText('P', (l.x + 4000) * k, (l.z + 4000) * k + 5); }
     g.fillStyle = '#2aa0ff'; g.beginPath(); g.arc((-180 + 4000) * k, (130 + 4000) * k, 8, 0, 7); g.fill();
     this.minimap = c; this.mmScale = k;
   }

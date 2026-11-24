@@ -374,7 +374,7 @@ export class Vehicle {
     s.x += s.vx * h; s.z += s.vz * h; s.yaw = wrapPi(s.yaw + s.w * h);
 
     // world edge
-    const E = 3940;
+    const E = world.garageActive ? 1e9 : 3940;
     if (Math.abs(s.x) > E) { s.x = Math.sign(s.x) * E; s.vx *= -0.3; }
     if (Math.abs(s.z) > E) { s.z = Math.sign(s.z) * E; s.vz *= -0.3; }
     // safety: fell through

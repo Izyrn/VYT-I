@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { clamp, lerp, smoothstep } from './util.js';
+import { parkSignTexture } from './parking.js';
 
 const NAMES_A = ['Meridian', 'Harbor', 'Apex', 'Summit', 'Aurora', 'Crescent', 'Vista', 'Orion', 'Zenith', 'Atlas', 'Beacon', 'Cedar', 'Ember', 'Falcon', 'Glacier', 'Horizon', 'Ivory', 'Juniper', 'Kestrel', 'Lumen'];
 const NAMES_B = ['Tower', 'Plaza', 'Residences', 'Heights', 'Court', 'Place', 'Gardens', 'Lofts'];
@@ -113,7 +114,7 @@ export class Extras {
 
   /* ---------------- building entrances ---------------- */
   buildEntrances() {
-    const W = this.world, frames = [], doors = [], canopies = [], signs = [], mats = [];
+    const W = this.world, frames = [], doors = [], canopies = [], signs = [], mats = [], rampHoles = [], rampFrames = [], rampSigns = [], rampFloors = [];
     W.buildings.forEach((b, i) => {
       b.id = i; b.name = buildingName(i);
       const faces = [[1, 0, b.cx + b.w / 2, b.cz], [-1, 0, b.cx - b.w / 2, b.cz], [0, 1, b.cx, b.cz + b.d / 2], [0, -1, b.cx, b.cz - b.d / 2]];
@@ -126,6 +127,15 @@ export class Extras {
       canopies.push({ x: ex + nx * 1.5, y: 3.95, z: ez + nz * 1.5, sx: 7, sy: 0.28, sz: 2.8, ry });
       signs.push({ x: ex + nx * 0.4, y: 5.3, z: ez + nz * 0.4, sx: 5.2, sy: 1.0, sz: 0.18, ry });
       mats.push({ x: ex + nx * 2.6, y: 0.17, z: ez + nz * 2.6, sx: 9, sy: 1, sz: 9 });
+      // underground car park: a ramp on another side of the building, facing the nearest road
+      let best2 = null, bd2 = 1e9;
+      for (const f of faces) { if (f === best) continue; const d = W.roadDist(f[2] + f[0] * 7, f[3] + f[1] * 7); if (d < bd2) { bd2 = d; best2 = f; } }
+      const [rnx, rnz, rex, rez] = best2, rry = rnx ? Math.PI / 2 : 0;
+      b.ramp = { x: rex + rnx * 3.2, z: rez + rnz * 3.2, nx: rnx, nz: rnz };
+      rampHoles.push({ x: rex + rnx * 0.3, y: 1.6, z: rez + rnz * 0.3, sx: 5, sy: 3.2, sz: 0.5, ry: rry });
+      rampFrames.push({ x: rex + rnx * 0.35, y: 3.45, z: rez + rnz * 0.35, sx: 5.4, sy: 0.35, sz: 0.55, ry: rry });
+      rampSigns.push({ x: rex + rnx * 0.7, y: 4.9, z: rez + rnz * 0.7, sx: 1.6, sy: 1.6, sz: 1, ry: Math.atan2(rnx, rnz) });
+      rampFloors.push({ x: rex + rnx * 3.8, y: 0.16, z: rez + rnz * 3.8, sx: rnx ? 7 : 5.2, sy: 1, sz: rnx ? 5.2 : 7 });
     });
     const box = new THREE.BoxGeometry(1, 1, 1);
     instanced(this.scene, box, new THREE.MeshStandardMaterial({ color: 0x1b1f24, roughness: 0.5, metalness: 0.6 }), frames);
@@ -136,6 +146,10 @@ export class Extras {
     instanced(this.scene, box, this.signMat, signs);
     this.entPoolMat = new THREE.MeshBasicMaterial({ map: glowTexture('rgba(255,225,170,0.85)', 'rgba(255,200,120,0.22)'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.25, fog: false });
     instanced(this.scene, new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), this.entPoolMat, mats);
+    instanced(this.scene, box, new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.9 }), rampHoles);
+    instanced(this.scene, box, new THREE.MeshStandardMaterial({ color: 0xe8c020, roughness: 0.5 }), rampFrames);
+    instanced(this.scene, new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: parkSignTexture() }), rampSigns);
+    instanced(this.scene, new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), rampFloors);
   }
   nearEntrance(x, z, r = 4.2) {
     let best = null, bd = r;
