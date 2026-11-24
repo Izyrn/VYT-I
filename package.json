@@ -1,0 +1,49 @@
+{
+  "name": "vyt-1",
+  "productName": "VYT 1",
+  "version": "0.1.0",
+  "description": "VYT 1 - open-world driving game for the desktop (Electron + Three.js)",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --publish never",
+    "icon": "electron tools/make-icon.cjs"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "sql.js": "^1.17.0",
+    "three": "^0.170.0"
+  },
+  "build": {
+    "appId": "com.vyt.vyt1",
+    "productName": "VYT 1",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**",
+      "src/**",
+      "build/icon.png",
+      "node_modules/three/build/**",
+      "node_modules/three/examples/jsm/**",
+      "node_modules/sql.js/dist/**",
+      "node_modules/sql.js/package.json",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "portable": {
+      "artifactName": "VYT-1-portable.exe"
+    }
+  },
+  "author": "VYT Studio",
+  "license": "UNLICENSED"
+}

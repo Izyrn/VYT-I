@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>VYT 1</title>
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }
+</script>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Segoe UI,Arial,sans-serif;color:#fff}
+  canvas#game{display:block;width:100%;height:100%}
+  #hud{position:fixed;inset:0;pointer-events:none}
+  #gauges{position:absolute;right:16px;bottom:16px;display:flex;gap:8px;align-items:flex-end}
+  #info{position:absolute;right:16px;top:12px;text-align:right;font-size:15px;text-shadow:0 1px 3px #000}
+  #prompt{position:absolute;left:50%;top:70%;transform:translateX(-50%);font-size:20px;text-shadow:0 1px 4px #000;text-align:center}
+  #msg{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-size:22px;text-shadow:0 1px 4px #000;opacity:0;transition:opacity .4s;text-align:center}
+  #mini{position:absolute;left:16px;bottom:16px;border-radius:50%;border:2px solid #fff6;background:#0008}
+  #overlay{position:fixed;inset:0;background:radial-gradient(#0b1d33,#000);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:5}
+  #overlay h1{font-size:96px;margin:0;letter-spacing:12px}
+  #overlay button,.btn{font-size:20px;padding:10px 28px;background:#e8b400;border:0;border-radius:6px;cursor:pointer;pointer-events:auto;color:#000}
+  .btn:disabled{cursor:not-allowed}
+  #overlay pre{font-size:14px;line-height:1.5;background:#0006;padding:14px 22px;border-radius:8px}
+  #shop{position:fixed;inset:0;background:#000c;display:none;align-items:center;justify-content:center;z-index:4}
+  #shopbox{background:#111e;border:1px solid #fff4;border-radius:10px;padding:20px;min-width:660px;max-width:760px;max-height:86vh;overflow:auto;pointer-events:auto}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:8px 0;border-bottom:1px solid #fff2}
+  #map{position:fixed;inset:0;background:#000d;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:4}
+  #map .bar{display:flex;gap:14px;align-items:center;font-size:14px;pointer-events:auto}
+  #map .bar .btn{font-size:14px;padding:6px 14px}
+  #map label{cursor:pointer;user-select:none}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<canvas id="wind" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:none"></canvas>
+<div id="mirror" style="position:fixed;left:50%;top:2%;width:28vw;aspect-ratio:512/160;transform:translateX(-50%);border:3px solid #0b0b0d;border-radius:10px;box-shadow:0 0 0 2px #555;display:none;pointer-events:none"></div>
+<div id="fps" style="position:fixed;left:16px;top:56px;font:12px monospace;color:#9f9;text-shadow:0 1px 2px #000;display:none;pointer-events:none"></div>
+<div id="hud">
+  <canvas id="mini" width="200" height="200"></canvas>
+  <button id="mapbtn" class="btn" style="position:absolute;left:16px;top:12px">🗺 MAP (M)</button>
+  <button id="phonebtn" class="btn" style="position:absolute;left:150px;top:12px">📱 PHONE (P)</button>
+  <div id="info"></div>
+  <div id="msg"></div>
+  <div id="prompt"></div>
+  <div id="gauges"><canvas id="dials" width="520" height="260"></canvas></div>
+</div>
+<div id="map">
+  <div class="bar">
+    <label><input type="checkbox" id="lf" checked> <span style="color:#ff7a00">●</span> Fuel</label>
+    <label><input type="checkbox" id="lj" checked> <span style="color:#35d07f">■</span> Cafés / jobs</label>
+    <label><input type="checkbox" id="lh" checked> <span>⌂</span> Houses</label>
+    <label><input type="checkbox" id="lp" checked> <span style="color:#ff3b30">●</span> Police</label>
+    <button id="mapcenter" class="btn">Centre on me</button>
+    <button id="mapclear" class="btn">Clear waypoint</button>
+    <button id="mapclose" class="btn">Close (M)</button>
+  </div>
+  <canvas id="mapc" width="1000" height="1000" style="height:82vh;width:82vh;cursor:crosshair;border:2px solid #fff4;border-radius:8px"></canvas>
+  <div id="mapinfo" style="font-size:14px"></div>
+</div>
+<div id="fade" style="position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .4s;z-index:6"></div>
+<div id="shop"><div id="shopbox"></div></div>
+<div id="overlay">
+  <h1>VYT 1</h1>
+  <button id="start" disabled>Loading the city...</button>
+  <button id="setbtn" class="btn" style="font-size:14px;padding:6px 16px;opacity:.85">Settings</button>
+  <div id="settings" style="display:none;background:#0008;padding:14px 22px;border-radius:10px;font-size:14px;line-height:2;min-width:420px">
+    <div>Master volume <input id="s_vol" type="range" min="0" max="1" step="0.05" style="vertical-align:middle"></div>
+    <div>Radio volume <input id="s_mus" type="range" min="0" max="1" step="0.05" style="vertical-align:middle"></div>
+    <div>Field of view <input id="s_fov" type="range" min="52" max="90" step="1" style="vertical-align:middle"></div>
+    <div>Graphics <select id="s_qual"><option value="0">Low</option><option value="1">Medium</option><option value="2">High</option></select>
+      &nbsp; Units <select id="s_units"><option value="kmh">km/h</option><option value="mph">mph</option></select>
+      &nbsp; Wipers <select id="s_wip"><option value="auto">Auto</option><option value="on">On</option><option value="off">Off</option></select></div>
+    <div><label><input id="s_mir" type="checkbox"> Rear-view mirror (cockpit / hood view)</label> &nbsp; <label><input id="s_shake" type="checkbox"> Camera shake</label> &nbsp; <label><input id="s_fps" type="checkbox"> Show FPS</label></div>
+  </div>
+  <button id="newgame" class="btn" style="font-size:14px;padding:6px 16px;opacity:.7">New game (erase save)</button>
+  <pre>W/S throttle/brake(reverse) · A/D steer · Space handbrake · I ignition · T auto/manual · Q/E shift down/up
+L headlights · Z/X/V indicators/hazards · H horn · C camera · F: refuel (hold) / dealership / houses
+M map (zoom, pan, GPS) · R rob / J delivery job / K cancel (at cafés) · F2 quality · F3 weather · F4 +1 hour
+P phone (call services, GPS, bank) anywhere · laptop at home (F at your desk) · Y = call services · N radio · U wipers · G get out / in of the car (F at a building door goes inside) (WASD walk, Shift run) · Backspace reset car · Esc pause · F11 fullscreen</pre>
+</div>
+<script type="module" src="/main.js"></script>
+</body>
+</html>
