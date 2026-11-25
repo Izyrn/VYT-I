@@ -77,6 +77,12 @@ L headlights · Z/X/V indicators/hazards · H horn · C camera · F: refuel (hol
 M map (zoom, pan, GPS) · R rob / J delivery job / K cancel (at cafés) · F2 quality · F3 weather · F4 +1 hour
 P phone (call services, GPS, bank) anywhere · laptop at home (F at your desk) · Y = call services · N radio · U wipers · G get out / in of the car (F at a building door goes inside) (WASD walk, Shift run) · Backspace reset car · Esc pause · F11 fullscreen</pre>
 </div>
-<script type="module" src="/main.js"></script>
+<script>
+  // If the game fails to start, say so instead of staying on the loading button.
+  function bootFail(msg) { const b = document.getElementById('start'); if (b && b.disabled) b.textContent = 'Could not load the game: ' + msg; }
+  addEventListener('error', (e) => bootFail(e.message || 'a game file is missing'), true);
+  addEventListener('unhandledrejection', (e) => bootFail(String(e.reason)));
+</script>
+<script type="module" src="/main.js" onerror="bootFail('a game file is missing')"></script>
 </body>
 </html>

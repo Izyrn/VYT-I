@@ -1,6 +1,7 @@
 const { app, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 const { pathToFileURL } = require('url');
 
 const SMOKE = process.argv.includes('--smoke');
@@ -43,9 +44,13 @@ app.whenReady().then(async () => {
   const root = app.getAppPath();
   protocol.handle('vyt', (req) => {
     const p = decodeURIComponent(new URL(req.url).pathname);
-    const file = p.startsWith('/vendor/three/')
-      ? path.join(root, 'node_modules', 'three', p.slice('/vendor/three/'.length))
-      : path.join(root, 'src', p);
+    // packaged builds carry three's add-ons in vendor/addons (see package.json); from source they live in node_modules
+    const ADDONS = '/vendor/three/examples/jsm/', packed = path.join(root, 'vendor', 'addons');
+    const file = p.startsWith(ADDONS) && fs.existsSync(packed)
+      ? path.join(packed, p.slice(ADDONS.length))
+      : p.startsWith('/vendor/three/')
+        ? path.join(root, 'node_modules', 'three', p.slice('/vendor/three/'.length))
+        : path.join(root, 'src', p);
     if (!path.resolve(file).startsWith(root)) return new Response('forbidden', { status: 403 });
     return net.fetch(pathToFileURL(file).toString());
   });

@@ -1,7 +1,7 @@
 {
   "name": "vyt-1",
   "productName": "VYT 1",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "VYT 1 - open-world driving game for the desktop (Electron + Three.js)",
   "main": "electron/main.js",
   "scripts": {
@@ -29,10 +29,16 @@
       "src/**",
       "build/icon.png",
       "node_modules/three/build/**",
-      "node_modules/three/examples/jsm/**",
       "node_modules/sql.js/dist/**",
       "node_modules/sql.js/package.json",
-      "package.json"
+      "package.json",
+      {
+        "from": "node_modules/three/examples/jsm",
+        "to": "vendor/addons",
+        "filter": [
+          "**/*.js"
+        ]
+      }
     ],
     "win": {
       "target": [
