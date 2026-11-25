@@ -27,6 +27,7 @@ export class GameAudio {
 
     this.squeal = this.loop(900, 6, 'bandpass'); this.wind = this.loop(600, 0.7, 'lowpass'); this.rainS = this.loop(3500, 0.5, 'highpass');
     this.cyl = 4;
+    this.carVol = 0.5;   // engine and road noise, set from Settings
     this.radio = new Radio(ctx, this.master);
     this.sirenOsc = ctx.createOscillator(); this.sirenOsc.type = 'sawtooth'; this.sirenG = ctx.createGain(); this.sirenG.gain.value = 0;
     const sl = ctx.createBiquadFilter(); sl.type = 'lowpass'; sl.frequency.value = 2200;
@@ -34,7 +35,7 @@ export class GameAudio {
   }
   /** dist = metres to the nearest police car (Infinity = silent). */
   siren(dist) {
-    const t = this.ctx.currentTime, vol = dist < 400 ? Math.min(0.12, 18 / (dist + 40)) : 0;
+    const t = this.ctx.currentTime, vol = dist < 400 ? Math.min(0.07, 10 / (dist + 40)) : 0;
     this.sirenG.gain.setTargetAtTime(vol, t, 0.1);
     this.sirenOsc.frequency.setTargetAtTime(Math.floor(t * 2.2) % 2 ? 960 : 720, t, 0.04);
   }
@@ -61,8 +62,8 @@ export class GameAudio {
     switch (name) {
       case 'tick': this.tone(1800, 0.03, 0.12); break;
       case 'tock': this.tone(1300, 0.03, 0.1); break;
-      case 'crash': this.burst(0.35, 900, 0.7); this.tone(70, 0.3, 0.6, 'sine'); break;
-      case 'crash-big': this.burst(0.8, 1400, 1); this.tone(55, 0.6, 0.9, 'sine'); break;
+      case 'crash': this.burst(0.35, 900, 0.4); this.tone(70, 0.3, 0.35, 'sine'); break;
+      case 'crash-big': this.burst(0.8, 1400, 0.6); this.tone(55, 0.6, 0.5, 'sine'); break;
       case 'shift': this.burst(0.08, 600, 0.08); break;
       case 'horn': this.tone(420, 0.4, 0.2, 'sawtooth'); this.tone(530, 0.4, 0.15, 'sawtooth'); break;
       case 'stall': this.burst(0.25, 300, 0.3); break;
@@ -81,12 +82,13 @@ export class GameAudio {
     this.o2.frequency.setTargetAtTime(Math.max(5, hz * 1.007), t, 0.03);
     this.o3.frequency.setTargetAtTime(Math.max(5, hz * 0.5), t, 0.03);
     const thr = v.ctrl.throttle * (e.state === 'running' ? 1 : 0);
-    this.eGain.gain.setTargetAtTime(on ? (0.1 + 0.28 * thr + 0.08 * (e.rpm / d.redline)) * cr * (inside ? 0.7 : 1) : 0, t, 0.05);
+    const cv = this.carVol;
+    this.eGain.gain.setTargetAtTime(on ? (0.05 + 0.12 * thr + 0.04 * (e.rpm / d.redline)) * cr * (inside ? 0.7 : 1) * cv * 1.2 : 0, t, 0.05);
     this.lp.frequency.setTargetAtTime((220 + e.rpm * 0.55 + thr * 900) * (inside ? 0.55 : 1), t, 0.05);
     const sq = Math.max(0, Math.min(1, (v.t.slip - 0.22) * 3 + v.t.wheelspin * 0.6 + (v.t.locked ? 0.6 : 0))) * (v.speed > 4 ? 1 : 0) * (v.t.grounded > 0.5 ? 1 : 0);
-    this.squeal.g.gain.setTargetAtTime(sq * 0.18, t, 0.04);
+    this.squeal.g.gain.setTargetAtTime(sq * 0.14 * cv, t, 0.04);
     this.squeal.f.frequency.setTargetAtTime(800 + v.speed * 8, t, 0.1);
-    this.wind.g.gain.setTargetAtTime(Math.min(0.35, (v.speed / 60) ** 2 * 0.35), t, 0.1);
+    this.wind.g.gain.setTargetAtTime(Math.min(0.35, (v.speed / 60) ** 2 * 0.35) * cv * 0.9, t, 0.1);
     this.rainS.g.gain.setTargetAtTime(env.cur.rain * (inside ? 0.05 : 0.13), t, 0.3);
   }
 }

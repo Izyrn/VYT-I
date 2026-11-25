@@ -1,7 +1,7 @@
 {
   "name": "vyt-1",
   "productName": "VYT 1",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "VYT 1 - open-world driving game for the desktop (Electron + Three.js)",
   "main": "electron/main.js",
   "scripts": {

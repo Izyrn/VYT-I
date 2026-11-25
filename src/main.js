@@ -24,10 +24,10 @@ const fmt = (n) => '$' + Math.round(n).toLocaleString();
 let toastT = 0, lastToast = '';
 function toast(m) { lastToast = m; const el = $('msg'); el.textContent = m; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => (el.style.opacity = 0), 2600); }
 
-const settings = Object.assign({ volume: 0.7, music: 0.6, fov: 62, mph: false, fps: false, mirrors: true, shake: true, wipers: 'auto' }, (() => { try { return JSON.parse(localStorage.getItem('vyt1.settings')) || {}; } catch { return {}; } })());
+const settings = Object.assign({ volume: 0.7, car: 0.5, music: 0.6, fov: 62, mph: false, fps: false, mirrors: true, shake: true, wipers: 'auto' }, (() => { try { return JSON.parse(localStorage.getItem('vyt1.settings')) || {}; } catch { return {}; } })());
 function saveSettings() { localStorage.setItem('vyt1.settings', JSON.stringify(settings)); applySettings(); }
 function applySettings() {
-  if (audio) audio.master.gain.value = settings.volume;
+  if (audio) { audio.master.gain.value = settings.volume; audio.carVol = settings.car; }
   $('fps').style.display = settings.fps ? 'block' : 'none';
 }
 const canvas = $('game');
@@ -646,10 +646,11 @@ function fpsTick(now) { fpsN++; if (now - fpsT > 500) { if (settings.fps) $('fps
 /* ---------------- settings panel ---------------- */
 {
   const el = (id) => $(id), set = (id, v, type) => { el(id)[type] = v; };
-  set('s_vol', settings.volume, 'value'); set('s_mus', settings.music, 'value'); set('s_fov', settings.fov, 'value'); set('s_qual', qi, 'value');
+  set('s_vol', settings.volume, 'value'); set('s_car', settings.car, 'value'); set('s_mus', settings.music, 'value'); set('s_fov', settings.fov, 'value'); set('s_qual', qi, 'value');
   set('s_units', settings.mph ? 'mph' : 'kmh', 'value'); set('s_wip', settings.wipers, 'value');
   set('s_mir', settings.mirrors, 'checked'); set('s_shake', settings.shake, 'checked'); set('s_fps', settings.fps, 'checked');
   const on = (id, fn) => { el(id).oninput = el(id).onchange = fn; };
+  on('s_car', () => { settings.car = +el('s_car').value; saveSettings(); });
   on('s_vol', () => { settings.volume = +el('s_vol').value; saveSettings(); }); on('s_mus', () => { settings.music = +el('s_mus').value; saveSettings(); });
   on('s_fov', () => { settings.fov = +el('s_fov').value; saveSettings(); });
   on('s_qual', () => { qi = +el('s_qual').value; applyQuality(); });
